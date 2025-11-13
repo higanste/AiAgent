@@ -160,9 +160,18 @@ function showStatus(text, type = '') {
 }
 
 async function getPageInfo() {
+  if (!currentTab || !currentTab.id) {
+    return { url: '', title: '', text: '' };
+  }
+
   return new Promise((resolve) => {
     chrome.tabs.sendMessage(currentTab.id, { action: 'getPageInfo' }, (response) => {
-      resolve(response || { url: currentTab.url, title: currentTab.title, text: '' });
+      if (chrome.runtime.lastError) {
+        // Content script might not be loaded, use tab info
+        resolve({ url: currentTab.url || '', title: currentTab.title || '', text: '' });
+      } else {
+        resolve(response || { url: currentTab.url || '', title: currentTab.title || '', text: '' });
+      }
     });
   });
 }
