@@ -25,7 +25,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 
   if (request.action === 'extractData') {
-    extractData(sender.tab.id, request.selector)
+    const tabId = request.tabId || sender?.tab?.id;
+    if (!tabId) {
+      sendResponse({ success: false, error: 'No tab ID provided' });
+      return;
+    }
+    extractData(tabId, request.selector)
       .then(data => sendResponse({ success: true, data }))
       .catch(error => sendResponse({ success: false, error: error.message }));
     return true;
