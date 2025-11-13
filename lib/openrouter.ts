@@ -1,13 +1,14 @@
-// Free models on OpenRouter
+// Free models on OpenRouter - using most reliable free models
 export const FREE_MODELS = [
+  'meta-llama/llama-3.2-3b-instruct:free',
+  'qwen/qwen-2.5-7b-instruct:free',
+  'mistralai/mistral-7b-instruct:free',
   'google/gemini-pro',
   'google/gemini-pro-vision',
-  'meta-llama/llama-3.2-3b-instruct:free',
-  'mistralai/mistral-7b-instruct:free',
-  'qwen/qwen-2.5-7b-instruct:free',
 ]
 
-export const DEFAULT_MODEL = 'google/gemini-pro'
+// Use a more reliable free model as default
+export const DEFAULT_MODEL = 'meta-llama/llama-3.2-3b-instruct:free'
 
 export async function callOpenRouter(
   messages: Array<{ role: string; content: string }>,
@@ -39,6 +40,10 @@ export async function callOpenRouter(
   })
 
   try {
+    // Use a timeout to prevent hanging
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 30000) // 30 second timeout
+
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -53,7 +58,10 @@ export async function callOpenRouter(
         temperature: 0.7,
         max_tokens: 2000,
       }),
+      signal: controller.signal,
     })
+
+    clearTimeout(timeoutId)
 
     if (!response.ok) {
       const errorText = await response.text()
@@ -83,6 +91,16 @@ export async function callOpenRouter(
 
     return content
   } catch (error: any) {
+    // Handle timeout
+    if (error.name === 'AbortError') {
+      throw new Error('Request timeout: The AI service took too long to respond. Please try again.')
+    }
+    
+    // Handle network errors
+    if (error.message && error.message.includes('fetch')) {
+      throw new Error('Network error: Unable to connect to AI service. Please check your connection and try again.')
+    }
+    
     // Re-throw with more context
     if (error.message) {
       throw error
