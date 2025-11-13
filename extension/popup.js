@@ -89,20 +89,25 @@ Respond ONLY with valid JSON when an action is needed, or plain text for explana
 
     removeTypingIndicator(typingId);
 
-    if (response.success) {
+    if (response && response.success) {
       addMessage(response.response, 'assistant');
 
       // Try to parse and execute action if it's JSON
       try {
-        const actionData = JSON.parse(response.response);
-        if (actionData.action) {
-          await executeAction(actionData);
+        // Check if response contains JSON
+        const jsonMatch = response.response.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          const actionData = JSON.parse(jsonMatch[0]);
+          if (actionData.action && actionData.selector) {
+            await executeAction(actionData);
+          }
         }
       } catch (e) {
-        // Not JSON, just display the message
+        // Not JSON or invalid JSON, just display the message
+        console.log('Response is not an action JSON:', e);
       }
     } else {
-      addMessage(`Error: ${response.error}`, 'error');
+      addMessage(`Error: ${response?.error || 'Unknown error'}`, 'error');
     }
   } catch (error) {
     removeTypingIndicator(typingId);
