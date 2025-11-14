@@ -1,6 +1,6 @@
 // Background service worker for Rtrvr extension
 
-const OPENROUTER_API_KEY = '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';
+const OPENROUTER_API_KEY = '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';
 const DEFAULT_MODEL = 'google/gemini-pro';
 
 // Listen for messages from content script or popup
@@ -65,7 +65,7 @@ async function handleChat(messages, model = DEFAULT_MODEL) {
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
-        'HTTP-Referer': 'https://rtrvr.vercel.app',
+        'HTTP-Referer': 'https://yuriai.vercel.app',
         'X-Title': 'Rtrvr AI Agent Extension',
       },
       body: JSON.stringify({

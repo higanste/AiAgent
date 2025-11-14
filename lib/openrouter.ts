@@ -15,7 +15,7 @@ export async function callOpenRouter(
   model: string = DEFAULT_MODEL
 ) {
   const apiKey = process.env.NEXT_PUBLIC_OPENROUTER_API_KEY || 
-    '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'
+    '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'
 
   // Clean the site URL (remove trailing slash)
   let siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://yuriai.vercel.app'

@@ -5,7 +5,7 @@ Copy and paste these into your Vercel project settings (Settings → Environment
 ## Required Variables
 
 ```
-NEXT_PUBLIC_OPENROUTER_API_KEY=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
+NEXT_PUBLIC_OPENROUTER_API_KEY=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
 ```
 
 ```
@@ -17,10 +17,12 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzd
 ```
 
 ```
-NEXT_PUBLIC_SITE_URL=https://your-project-name.vercel.app
+NEXT_PUBLIC_SITE_URL=https://yuriai.vercel.app
 ```
 
-**Note:** Replace `your-project-name` with your actual Vercel project name after deployment.
+**⚠️ IMPORTANT:** 
+- **NO trailing slash** (no `/` at the end)
+- Should be exactly: `https://yuriai.vercel.app`
 
 ## How to Add in Vercel
 

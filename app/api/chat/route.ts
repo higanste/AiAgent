@@ -7,7 +7,8 @@ export async function POST(request: NextRequest) {
     let body
     try {
       body = await request.json()
-    } catch (parseError) {
+    } catch (parseError: any) {
+      console.error('JSON parse error:', parseError)
       return NextResponse.json(
         { error: 'Invalid JSON in request body' },
         { status: 400 }
@@ -54,8 +55,60 @@ export async function POST(request: NextRequest) {
       ]
     }
 
+    // Check if API key is available
+    const apiKey = process.env.NEXT_PUBLIC_OPENROUTER_API_KEY
+    if (!apiKey) {
+      console.error('OpenRouter API key is missing!')
+      return NextResponse.json(
+        { 
+          error: 'API configuration error. Please check environment variables.',
+          details: 'NEXT_PUBLIC_OPENROUTER_API_KEY is not set'
+        },
+        { status: 500 }
+      )
+    }
+
     // Call OpenRouter API
-    const response = await callOpenRouter(enhancedMessages, model)
+    let response: string
+    try {
+      response = await callOpenRouter(enhancedMessages, model)
+    } catch (apiError: any) {
+      console.error('OpenRouter API call failed:', {
+        message: apiError.message,
+        stack: apiError.stack,
+        name: apiError.name
+      })
+      
+      // Return more specific error messages
+      if (apiError.message?.includes('timeout')) {
+        return NextResponse.json(
+          { error: 'Request timeout. The AI service took too long to respond. Please try again.' },
+          { status: 504 }
+        )
+      }
+      
+      if (apiError.message?.includes('Network error')) {
+        return NextResponse.json(
+          { error: 'Network error. Unable to connect to AI service. Please check your connection.' },
+          { status: 503 }
+        )
+      }
+
+      if (apiError.message?.includes('401') || apiError.message?.includes('Unauthorized')) {
+        return NextResponse.json(
+          { error: 'API authentication failed. Please check your API key configuration.' },
+          { status: 401 }
+        )
+      }
+
+      return NextResponse.json(
+        { 
+          error: apiError.message || 'Failed to get AI response',
+          details: process.env.NODE_ENV === 'development' ? apiError.message : undefined
+        },
+        { status: 500 }
+      )
+    }
 
     // Validate response
     if (!response || typeof response !== 'string' || response.trim() === '') {
