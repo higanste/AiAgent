@@ -107,31 +107,74 @@ async function executeAction(actionType, params, tabId) {
 function performAction(actionType, params) {
   switch (actionType) {
     case 'click':
-      const element = document.querySelector(params.selector);
-      if (element) {
-        element.click();
-        return { success: true, message: `Clicked on ${params.selector}` };
+      // Try multiple selectors
+      const selectors = params.selector.split(',').map(s => s.trim());
+      for (const selector of selectors) {
+        try {
+          const element = document.querySelector(selector);
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(() => {
+              element.click();
+            }, 100);
+            return { success: true, message: `Clicked on ${selector}` };
+          }
+        } catch (e) {
+          continue;
+        }
       }
       return { success: false, message: `Element not found: ${params.selector}` };
 
     case 'type':
-      const input = document.querySelector(params.selector);
-      if (input) {
-        input.value = params.text;
-        input.dispatchEvent(new Event('input', { bubbles: true }));
-        input.dispatchEvent(new Event('change', { bubbles: true }));
-        return { success: true, message: `Typed into ${params.selector}` };
+      const inputSelectors = params.selector.split(',').map(s => s.trim());
+      for (const selector of inputSelectors) {
+        try {
+          const input = document.querySelector(selector);
+          if (input && (input.tagName === 'INPUT' || input.tagName === 'TEXTAREA')) {
+            input.focus();
+            input.value = params.text;
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+            input.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true }));
+            input.dispatchEvent(new KeyboardEvent('keyup', { bubbles: true }));
+            return { success: true, message: `Typed "${params.text}" into ${selector}` };
+          }
+        } catch (e) {
+          continue;
+        }
       }
       return { success: false, message: `Input not found: ${params.selector}` };
 
     case 'extract':
-      const elements = Array.from(document.querySelectorAll(params.selector));
-      const data = elements.map(el => el.textContent?.trim()).filter(Boolean);
-      return { success: true, data };
+      const extractSelectors = params.selector.split(',').map(s => s.trim());
+      let allData = [];
+      for (const selector of extractSelectors) {
+        try {
+          const elements = Array.from(document.querySelectorAll(selector));
+          const data = elements.map(el => ({
+            text: el.textContent?.trim(),
+            href: el.href || null,
+            tag: el.tagName
+          })).filter(item => item.text);
+          allData = allData.concat(data);
+        } catch (e) {
+          continue;
+        }
+      }
+      return { success: true, data: allData, count: allData.length };
 
     case 'navigate':
       window.location.href = params.url;
       return { success: true, message: `Navigating to ${params.url}` };
+
+    case 'wait':
+      return { success: true, message: `Waiting ${params.ms}ms` };
+
+    case 'scroll':
+      const amount = params.amount || 500;
+      const direction = params.direction === 'up' ? -amount : amount;
+      window.scrollBy({ top: direction, behavior: 'smooth' });
+      return { success: true, message: `Scrolled ${params.direction} ${amount}px` };
 
     default:
       return { success: false, message: `Unknown action: ${actionType}` };
